@@ -7,8 +7,8 @@ from docxtpl import DocxTemplate
 from docxtpl.richtext import RichTextParagraph, RichText
 from datetime import datetime
 from templates import TemplateSelectorProc, TemplateSelectorCont, ContextBuilder, DocumentProcessor
-from models import ProcRequest
-
+from models import ProcRequest, AnaliseInfoRequest
+from funcoes import analisar_html
 
 
 app = FastAPI()
@@ -65,3 +65,7 @@ async def get_modelos_proc():
             "total_records": len(parsed_data),
             "data": parsed_data
         }
+
+@app.post("/analisar_html_info")
+async def analisar_html_info(request: AnaliseInfoRequest):
+    teste = analisar_html(request.html)

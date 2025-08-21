@@ -17,3 +17,6 @@ class ProcRequest(BaseModel):
     informa_endereco: bool
     informa_prof: bool
     informa_civ: bool
+
+class AnaliseInfoRequest(BaseModel):
+    html: str

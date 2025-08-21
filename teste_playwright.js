@@ -83,14 +83,19 @@ async function extrairDadosDaPagina(url) {
 
                 // 1. Extrai o HTML completo do bloco do item
                 const htmlDoItem = await item.innerHTML();
+                let requestBody = {
+                    html: htmlDoItem
+                }
+                const fastApiResponse = await fetch('http://127.0.0.1:8000/analisar_html_info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+                });
 
-                // 2. Envia o HTML para a função que simula o LLM
-                const analiseDoLLM = await analisarComLLM(htmlDoItem);
 
                 // 3. Adiciona o resultado à lista final
                 resultadosFinais.push({
-                    item: index + 1,
-                    ...analiseDoLLM
+                    item: index + 1
                 });
             }
             console.log(resultadosFinais)
