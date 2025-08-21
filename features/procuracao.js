@@ -241,20 +241,210 @@ export async function handleProcuracaoConversation(message, currentState, client
             }
         }
 
-
         else {
              await client.sendMessage(message.from, `Opção inválida. ☝️ Tente novamente.`)
              return currentState
         }
     }
 
+    else if (featureState === PROCURACAO_STATES.WAITING_IMAGE_PERS) {
+        const dados_pess = await f.processarImagem(message, 'pers');
 
+        if (dados_pess) {
+            await client.sendMessage(message.from, f.formatarValidaPess(dados_pess));
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.APPROVING_PERS,
+                featureData: {
+                    ...featureData,
+                    dados_pess: dados_pess,
+                    timestamp: Date.now()
+                }
+            };
+        } else {
+            const lines = [
+                '❌ Não foi possível processar a imagem.',
+                '🔄 Tente novamente.',
+                '📸 Procure enviar uma imagem em boa definição e bem enquadrada.'
+            ];
+            await client.sendMessage(message.from, lines.join('\n'));
+            return currentState; // Continua no mesmo estado
+        }
+    }
 
+    // Processar texto com informações pessoais
+    else if (featureState === PROCURACAO_STATES.WAITING_WRITE_PERS) {
+        const dados_pess = await f.processarEscrita(message, 'pers');
+        
+        if (dados_pess) {
+            await client.sendMessage(message.from, f.formatarValidaPess(dados_pess));
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.APPROVING_PERS,
+                featureData: {
+                    ...featureData,
+                    dados_pess: dados_pess,
+                    timestamp: Date.now()
+                }
+            };
+        } else {
+            const lines = [
+                'Não foi possível processar o texto.',
+                'Tente novamente.',
+                'Certifique-se de fornecer apenas nome completo e CPF.',
+                'Por exemplo: "Gerônimo Pereira, cpf 000 000 000 00."'
+            ];
+            await client.sendMessage(message.from, lines.join('\n'));
+            return currentState;
+        }
+    }
 
+    // Aguardando aprovação das informações pessoais
+    else if (featureState === PROCURACAO_STATES.APPROVING_PERS) {
+        const choice = parseInt(message.body.trim());
 
+        if (choice === 1) { // Dados corretos
+            await client.sendMessage(message.from, 'Informar profissão?\n👍1 - Sim;\n👎2 - Não.');
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.WAITING_JOB,
+                featureData: { ...featureData, timestamp: Date.now() }
+            };
+        } else if (choice === 2) { // Corrigir dados
+            await client.sendMessage(message.from, "✍🏻 Informe nome completo e CPF.");
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.CORRECTING_PERS,
+                featureData: { ...featureData, timestamp: Date.now() }
+            };
+        } else {
+            await client.sendMessage(message.from, 'Opção inválida. ☝️ Tente novamente.');
+            return currentState;
+        }
+    }
 
+    // Corrigindo informações pessoais
+    else if (featureState === PROCURACAO_STATES.CORRECTING_PERS) {
+        const dados_pess = await f.corrigirPessoais(message.body);
 
-    //AQUI O RESTO
+        if (dados_pess) {
+            await client.sendMessage(message.from, f.formatarValidaPess(dados_pess));
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.APPROVING_PERS,
+                featureData: {
+                    ...featureData,
+                    dados_pess: dados_pess,
+                    timestamp: Date.now()
+                }
+            };
+        } else {
+            const lines = [
+                'Erro ao processar as informações pessoais fornecidas. Tente novamente.',
+                'Informe, por escrito, nome completo e CPF do sujeito.'
+            ];
+            await client.sendMessage(message.from, lines.join('\n'));
+            return currentState;
+        }
+    }
+
+    // Perguntando se informa a profissão
+    else if (featureState === PROCURACAO_STATES.WAITING_JOB) {
+        const choice = parseInt(message.body.trim());
+
+        if (choice === 1) { // Sim, informar profissão
+            await client.sendMessage(message.from, 'Informe a profissão, exatamente como deve sair no documento.');
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.WAITING_WRITE_JOB,
+                featureData: { ...featureData, timestamp: Date.now() }
+            };
+        } else if (choice === 2) { // Não, pular para estado civil
+            await client.sendMessage(message.from, 'Informar estado civil?\n1 - Sim;\n2 - Não.');
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.IF_MARIT,
+                featureData: { ...featureData, timestamp: Date.now() }
+            };
+        } else {
+            await client.sendMessage(message.from, 'Opção inválida. ☝️ Tente novamente.');
+            return currentState;
+        }
+    }
+
+    // Aguardando o texto da profissão
+    else if (featureState === PROCURACAO_STATES.WAITING_WRITE_JOB) {
+        const profissao = message.body.trim();
+
+        if (profissao && profissao.length > 0) {
+            await client.sendMessage(message.from, 'Informar estado civil?\n1 - Sim;\n2 - Não.');
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.IF_MARIT,
+                featureData: {
+                    ...featureData,
+                    profissao: profissao,
+                    timestamp: Date.now()
+                }
+            };
+        } else {
+            await client.sendMessage(message.from, 'Por favor, informe a profissão.');
+            return currentState;
+        }
+    }
+
+    else if (featureState === PROCURACAO_STATES.IF_MARIT) {
+        const choice = parseInt(message.body.trim());
+
+        if (choice === 1) { // Sim, informar estado civil
+            await client.sendMessage(message.from, 'Informe o estado civil, exatamente como deve sair no documento.');
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.WAITING_MARIT,
+                featureData: { ...featureData, timestamp: Date.now() }
+            };
+        } else if (choice === 2) { // Não, ir para aprovação final
+            await client.sendMessage(message.from, f.formatarResumoFinal(currentState));
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.WAITING_FINAL_APPROVAL,
+                featureData: { ...featureData, timestamp: Date.now() }
+            };
+        } else {
+            await client.sendMessage(message.from, 'Opção inválida. ☝️ Tente novamente.');
+            return currentState;
+        }
+    }
+
+    else if (featureState === PROCURACAO_STATES.WAITING_MARIT) {
+        const estadoCivil = message.body.trim();
+
+        if (estadoCivil && estadoCivil.length > 0) {
+            // Cria um estado temporário para enviar o resumo já com o estado civil
+            const tempState = {
+                ...currentState,
+                featureData: {
+                    ...featureData,
+                    estadoCivil: estadoCivil
+                }
+            };
+            await client.sendMessage(message.from, f.formatarResumoFinal(tempState));
+
+            // Retorna o estado final atualizado
+            return {
+                ...currentState,
+                featureState: PROCURACAO_STATES.WAITING_FINAL_APPROVAL,
+                featureData: {
+                    ...featureData,
+                    estadoCivil: estadoCivil,
+                    timestamp: Date.now()
+                }
+            };
+        } else {
+            await client.sendMessage(message.from, 'Por favor, informe um estado civil.');
+            return currentState;
+        }
+    }
 
     else if (featureState === PROCURACAO_STATES.WAITING_FINAL_APPROVAL) {
         
@@ -331,5 +521,4 @@ export async function handleProcuracaoConversation(message, currentState, client
             return currentState
         }
     }
-    
 }
