@@ -1,7 +1,9 @@
-export const CONVERSATION_STATES = {
-    // Estado inicial
+export const MAIN_STATES = {
     IDLE: 'idle',
-    
+    IN_FEATURE: 'in_feature'
+};
+
+export const PROCURACAO_STATES = {
     // Seleção do tipo de procuração/contrato
     SELECTING_TYPE: 'selecting_type',
     
