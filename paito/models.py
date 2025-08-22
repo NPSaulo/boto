@@ -7,7 +7,7 @@ class ProcRequest(BaseModel):
     profissao: str | None = None
     cidade: str = 'Cuiabá'
     estado: str = 'MT'
-    endereço: str | None = None
+    endereco: str | None = None
     cep: str | None = None
     finalidade_proc: str
     objeto_con: str

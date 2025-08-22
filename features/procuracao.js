@@ -3,6 +3,7 @@ import * as f from '../funcoes.js';
 
 
 export async function handleProcuracaoConversation(message, currentState, client) {
+    console.log(currentState)
     // primeiro estado = feature_state limpo
     if (currentState.featureState === null) {
         const fastApiResponse = await fetch('http://127.0.0.1:8000/teste', {
@@ -184,7 +185,7 @@ export async function handleProcuracaoConversation(message, currentState, client
     }
 
     else if (featureState === PROCURACAO_STATES.CORRECTING_ADRESS) {
-        let dados_end = await f.corrigirEndereço(message.body, currentState.dados_end)
+        let dados_end = await f.corrigirEndereço(message.body, currentState.featureData.dados_end)
         if (dados_end) {
             let nextState = PROCURACAO_STATES.APPROVING_ADRESS
             currentState = {
@@ -196,7 +197,7 @@ export async function handleProcuracaoConversation(message, currentState, client
                     timestamp: Date.now()
                 }
             }
-            let messageToSend = f.formatarValidaEnd(currentState.dados_end)
+            let messageToSend = f.formatarValidaEnd(currentState.featureData.dados_end)
             await client.sendMessage(message.from, messageToSend)
         }
         else {
@@ -454,11 +455,11 @@ export async function handleProcuracaoConversation(message, currentState, client
             
             // Enviar para FastAPI
             await f.requestFastApi(
-                currentState.dados_pess,
-                currentState.dados_end,
-                currentState.selectedOption,
-                currentState.profissao,
-                currentState.estadoCivil,
+                currentState.featureData.dados_pess,
+                currentState.featureData.dados_end,
+                currentState.featureData.selectedOption,
+                currentState.featureData.profissao,
+                currentState.featureData.estadoCivil,
                 message
             );
             

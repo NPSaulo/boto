@@ -84,7 +84,7 @@ async function extrairDadosDaPagina(url) {
                 // 1. Extrai o HTML completo do bloco do item
                 const htmlDoItem = await item.innerHTML();
 
-                // 2. Envia o HTML para a função que simula o LLM
+                //NÃO FUNCIONA ASSIM, MUITO LENTO. A SEPARAÇÃO ENTRE JULGADOS E AFETADOS PRECISA SER OBJETIVA, NÃO POR LLM
                 const analiseDoLLM = await analisarComLLM(htmlDoItem);
 
                 // 3. Adiciona o resultado à lista final

@@ -475,31 +475,31 @@ export function formatarResumoFinal(currentState) {
     let message = `📋 *RESUMO FINAL DOS DADOS:*\n\n`;
     
     // Dados pessoais obrigatórios
-    message += `👤 *Nome:* ${currentState.dados_pess?.nome || 'Não informado'}\n`;
-    message += `📄 *CPF:* ${currentState.dados_pess?.cpf || 'Não informado'}\n\n`;
+    message += `👤 *Nome:* ${currentState.featureData.dados_pess?.nome || 'Não informado'}\n`;
+    message += `📄 *CPF:* ${currentState.featureData.dados_pess?.cpf || 'Não informado'}\n\n`;
     
     // Endereço (se informado)
-    if (currentState.informa_endereco && currentState.dados_end) {
+    if (currentState.featureData.informa_endereco && currentState.featureData.dados_end) {
         message += `🏠 *ENDEREÇO:*\n`;
-        message += `📍 *Endereço:* ${currentState.dados_end.endereco}\n`;
-        message += `🏙️ *Cidade:* ${currentState.dados_end.cidade}\n`;
-        message += `📍 *Estado:* ${currentState.dados_end.estado}\n`;
-        message += `📮 *CEP:* ${currentState.dados_end.cep}\n\n`;
+        message += `📍 *Endereço:* ${currentState.featureData.dados_end.endereco}\n`;
+        message += `🏙️ *Cidade:* ${currentState.featureData.dados_end.cidade}\n`;
+        message += `📍 *Estado:* ${currentState.featureData.dados_end.estado}\n`;
+        message += `📮 *CEP:* ${currentState.featureData.dados_end.cep}\n\n`;
     }
     
     // Profissão (se informada)
-    if (currentState.profissao) {
-        message += `💼 *Profissão:* ${currentState.profissao}\n`;
+    if (currentState.featureData.profissao) {
+        message += `💼 *Profissão:* ${currentState.featureData.profissao}\n`;
     }
     
     // Estado civil (se informado)
-    if (currentState.estadoCivil) {
-        message += `💍 *Estado Civil:* ${currentState.estadoCivil}\n`;
+    if (currentState.featureData.estadoCivil) {
+        message += `💍 *Estado Civil:* ${currentState.featureData.estadoCivil}\n`;
     }
     
     // Tipo de procuração/contrato
     message += `\n📄 *TIPO DE DOCUMENTO:*\n`;
-    message += `${currentState.selectedOption?.demanda || 'Não informado'}\n\n`;
+    message += `${currentState.featureData.selectedOption?.demanda || 'Não informado'}\n\n`;
     
     message += `🔍 *Confirme se todos os dados estão corretos:*\n\n`;
     message += `*1* - ✅ Todos os dados estão corretos, gerar documento\n`;
@@ -514,17 +514,17 @@ export async function processarCorrecoesFinal(currentState, correcaoSolicitada, 
         // Preparar dados atuais para o LLM
         const dadosAtuais = {
             dados_pessoais: {
-                nome: currentState.dados_pess?.nome,
-                cpf: currentState.dados_pess?.cpf
+                nome: currentState.featureData.dados_pess?.nome,
+                cpf: currentState.featureData.dados_pess?.cpf
             },
-            dados_end: currentState.informa_endereco ? {
-                endereco: currentState.dados_end?.endereco,
-                cidade: currentState.dados_end?.cidade,
-                estado: currentState.dados_end?.estado,
-                cep: currentState.dados_end?.cep
+            dados_end: currentState.featureData.informa_endereco ? {
+                endereco: currentState.featureData.dados_end?.endereco,
+                cidade: currentState.featureData.dados_end?.cidade,
+                estado: currentState.featureData.dados_end?.estado,
+                cep: currentState.featureData.dados_end?.cep
             } : null,
-            profissao: currentState.profissao || null,
-            estado_civil: currentState.estadoCivil || null,
+            profissao: currentState.featureData.profissao || null,
+            estado_civil: currentState.featureData.estadoCivil || null,
         };
 
         const response = await anthropic.messages.create({

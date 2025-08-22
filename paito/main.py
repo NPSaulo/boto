@@ -50,7 +50,7 @@ async def fazer_proc_cont(request: ProcRequest):
             }
         }
     
-    except Exception as e:
+    except:
         return {
             'error': f'Erro ao processar documento: {str(e)}'
         }
