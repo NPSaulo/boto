@@ -199,6 +199,7 @@ export async function handleProcuracaoConversation(message, currentState, client
             }
             let messageToSend = f.formatarValidaEnd(currentState.featureData.dados_end)
             await client.sendMessage(message.from, messageToSend)
+            return currentState
         }
         else {
             let messageToSend = '❌ Erro ao processar o endereço informado. Tente novamente.'+
@@ -492,7 +493,7 @@ export async function handleProcuracaoConversation(message, currentState, client
     }
 
     else if (featureState === PROCURACAO_STATES.CORRECTING_FINAL) {
-        const dadosCorrigidos = await f.processarCorrecoesFinal(currentState, message.body, anthropic);
+        const dadosCorrigidos = await f.processarCorrecoesFinal(currentState, message.body);
         if (dadosCorrigidos) {
             let nextState = PROCURACAO_STATES.WAITING_FINAL_APPROVAL
 

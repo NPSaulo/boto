@@ -509,7 +509,7 @@ export function formatarResumoFinal(currentState) {
     return message;
 }
 
-export async function processarCorrecoesFinal(currentState, correcaoSolicitada, anthropic) {
+export async function processarCorrecoesFinal(currentState, correcaoSolicitada) {
     try {
         // Preparar dados atuais para o LLM
         const dadosAtuais = {
