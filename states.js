@@ -40,3 +40,13 @@ export const PROCURACAO_STATES = {
     CORRECTING_FINAL: 'correcting_final',
     REQUEST_FASTAPI: 'request_fastapi'
 };
+
+export const AFAZER_STATES = {
+    //inicial, esperando usuário mandar o a-fazer
+    WAITING_MSG: 'waiting_msg',
+
+    //mostrando como seria escrito
+    WAITING_APPROVAL: 'waiting_approval',
+
+    REQUEST_FASTAPI: 'request_fastapi'
+}

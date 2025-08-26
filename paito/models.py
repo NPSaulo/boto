@@ -20,3 +20,7 @@ class ProcRequest(BaseModel):
 
 class AnaliseInfoRequest(BaseModel):
     html: str
+
+
+class AnotarAfazerRequest(BaseModel):
+    afazer: str

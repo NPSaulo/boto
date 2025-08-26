@@ -3,6 +3,8 @@ const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode-terminal';
 import { MAIN_STATES } from './states.js';
 import { handleProcuracaoConversation } from './features/procuracao.js';
+import { handleAfazerConversation } from './features/afazer.js';
+
 
 const client = new Client({
     puppeteer: {
@@ -58,14 +60,12 @@ client.on('message', async message => {
                 const newState = await handleProcuracaoConversation(message, currentState, client);
                 conversationStates.set(userId, newState);
             }
-            // NO FUTURO: Adicione outros comandos aqui
-            // else if (message.body.toLowerCase() === "verificar_processo") {
-            //     currentState.mainState = MAIN_STATES.IN_FEATURE;
-            //     currentState.activeFeature = 'processos';
-            //     // const newState = await handleProcessoConversation(message, currentState, client);
-            //     // conversationStates.set(userId, newState);
-            // }
-              // Comando não reconhecido no estado idle
+            else if (message.body.toLowerCase() === "/afazer") {
+            currentState.mainState = MAIN_STATES.IN_FEATURE;
+                 currentState.activeFeature = 'afazer';
+                const newState = await handleAfazerConversation(message, currentState, client);
+                conversationStates.set(userId, newState);
+            }
             else {
                 await message.reply("Comando não reconhecido.");
             }
@@ -82,10 +82,16 @@ client.on('message', async message => {
                     conversationStates.set(userId, newState);
                 }
             }
-            // NO FUTURO: Adicione outros handlers aqui
-            // else if (currentState.activeFeature === 'processos') {
-            //     ...
-            // }
+            else if (currentState.activeFeature === 'afazer') {
+                const newState = await handleAfazerConversation(message, currentState, client);
+                
+                // Se a feature sinalizar que terminou, reseta o estado do usuário para IDLE
+                if (newState.finished) {
+                    conversationStates.delete(userId);
+                } else {
+                    conversationStates.set(userId, newState);
+                }
+            }
         }
     }
     catch (error) {

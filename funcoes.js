@@ -582,4 +582,77 @@ export async function processarCorrecoesFinal(currentState, correcaoSolicitada) 
         return null;
     }
 }
+
+export async function processarAudioAfazer(message) {
+    console.log("Simulando processamento de áudio...");
+    // Aqui entraria a lógica real de download e transcrição do áudio (ex: com a API do Whisper)
+    await sleep(1500); // Simula o tempo de processamento
+    return "Texto transcrito do áudio de exemplo.";
+}
+
+
+export async function corrigirAudioAfazer(message, featureData) {
+    
+}
+
+export async function processarTextoAfazer(texto) {
+    const response = await anthropic.messages.create({
+        model: 'claude-3-5-haiku-latest',
+        max_tokens: 200,
+        temperature: 0,
+        system: `Você é um assistente especializado em anotar tarefas. 
+        Sua tarefa é analisar textos e extrair nome completo e CPF. 
+        SEMPRE responda em formato JSON válido com a única chave 'afazer'. 
+        Se não conseguir extrair uma tarefa do texto, use null para o valor. 
+        Exemplos de resposta: {"afazer": "regar as plantas"},{"afazer": "enviar mensagem para Fulano sobre tal coisa"}`,
+        messages: [
+            {
+                role: "user", 
+                content: [
+                    {
+                        type: "text", 
+                        text: `Extraia do texto fornecido a tarefa a-fazer, retornando no formato JSON especificado.
+                        
+                        Texto: ${texto}`
+                    }
+                ]
+            }
+        ]
+    });
+    const dados = JSON.parse(response.content[0].text);
+    console.log(dados)
+    return dados;
+}
+
+export async function corrigirTextoAfazer(message_body, featureData) {
+    
+}
+
+export async function enviarAfazerParaApi(afazerTexto) {
+    try {
+        let requestBody = {
+            afazer: afazerTexto
+        };
+        console.log(`Enviando para a API: "${afazerTexto}"`);
+        console.log(requestBody)
+        const fastApiResponse = await fetch('http://127.0.0.1:8000/anotar_afazer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+    
+        if (!fastApiResponse.ok) {
+            throw new Error(`Erro HTTP: ${fastApiResponse.status}`);
+        }
+        return { success: true, message: "Anotado com sucesso no sistema." };
+    }
+    catch (fetchError) {
+        console.error('Erro ao enviar para FastAPI:', fetchError);
+        await message.reply(`❌ Erro ao anotar afazer: ${fetchError.message}`);
+    }
+}
+
+
 export const sleep = ms => new Promise(resolve => setTimeout(resolve,ms))

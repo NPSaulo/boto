@@ -7,8 +7,12 @@ from docxtpl import DocxTemplate
 from docxtpl.richtext import RichTextParagraph, RichText
 from datetime import datetime
 from templates import TemplateSelectorProc, TemplateSelectorCont, ContextBuilder, DocumentProcessor
-from models import ProcRequest, AnaliseInfoRequest
+from models import ProcRequest, AnaliseInfoRequest, AnotarAfazerRequest
 from funcoes import analisar_html
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
 app = FastAPI()
@@ -69,3 +73,14 @@ async def get_modelos_proc():
 @app.post("/analisar_html_info")
 async def analisar_html_info(request: AnaliseInfoRequest):
     teste = analisar_html(request.html)
+
+@app.post("/anotar_afazer")
+async def anotar_afazer(request: AnotarAfazerRequest):
+    print(request)
+    try:
+        PATH_TODOLIST = os.getenv('PATH_TODOLIST')
+        with open(PATH_TODOLIST, "a") as file:
+            file.write("\n" + request.afazer)
+        print("A-fazer anotado com sucesso.")
+    except Exception as e:
+        print(f"Erro ao anotar a-fazer: {e}")
