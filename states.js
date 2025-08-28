@@ -47,6 +47,6 @@ export const AFAZER_STATES = {
 
     //mostrando como seria escrito
     WAITING_APPROVAL: 'waiting_approval',
-
+    WAITING_CORRECTION: 'waiting_correction',
     REQUEST_FASTAPI: 'request_fastapi'
 }

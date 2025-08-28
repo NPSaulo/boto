@@ -24,7 +24,7 @@ export async function handleAfazerConversation(message, currentState, client) {
     if (featureState === AFAZER_STATES.WAITING_MSG) {
         let afazerProcessado = ""
         // Verifica se é um áudio (ptt = push-to-talk)
-        if (message.hasMedia && message.type === 'ptt') {
+        if (message.hasMedia && (message.type === 'ptt' || message.type === 'audio')) {
             await client.sendMessage(message.from, "🎙️ Processando seu áudio, um momento...");
             afazerProcessado = await f.processarAudioAfazer(message);
         } 
@@ -65,7 +65,7 @@ export async function handleAfazerConversation(message, currentState, client) {
 
         if (choice === 1) {
             await client.sendMessage(message.from, "⏳ Ok, salvando seu a-fazer...");
-            const apiResponse = await f.enviarAfazerParaApi(featureData.afazer);
+            const apiResponse = await f.enviarAfazerParaApi(featureData.afazer, message);
 
             if (apiResponse.success) {
                 await client.sendMessage(message.from, `✅ A-fazer anotado com sucesso!`);
@@ -95,11 +95,11 @@ export async function handleAfazerConversation(message, currentState, client) {
         // Verifica se é um áudio (ptt = push-to-talk)
         if (message.hasMedia && message.type === 'ptt') {
             await client.sendMessage(message.from, "🎙️ Processando seu áudio, um momento...");
-            afazerCorrigido = await f.corrigirAudioAfazer(message, featureState);
+            afazerCorrigido = await f.corrigirAudioAfazer(message, featureData);
         } 
         // Verifica se é um texto
         else if (message.body && !message.hasMedia) {
-            afazerCorrigido = await f.corrigirTextoAfazer(message.body, featureState);
+            afazerCorrigido = await f.corrigirTextoAfazer(message.body, featureData);
         } 
         // Se for qualquer outra coisa (imagem, vídeo, etc.)
         else {
@@ -112,7 +112,7 @@ export async function handleAfazerConversation(message, currentState, client) {
             await client.sendMessage(message.from, "❌ Não foi possível entender sua mensagem. Tente novamente.");
             return currentState;
         }
-        const messageToSend = `📋 Anotar o seguinte a-fazer?\n\n*_"${afazerCorrigido}"_*\n\n*1* - ✅ Sim, está correto\n*2* - ✍️ Não, quero corrigir`;
+        const messageToSend = `📋 Anotar o seguinte a-fazer?\n\n*_"${afazerCorrigido.afazer}"_*\n\n*1* - ✅ Sim, está correto\n*2* - ✍️ Não, quero corrigir`;
         await client.sendMessage(message.from, messageToSend);
 
         // Atualiza o estado para aguardar a aprovação
@@ -121,7 +121,7 @@ export async function handleAfazerConversation(message, currentState, client) {
             featureState: AFAZER_STATES.WAITING_APPROVAL,
             featureData: {
                 ...featureData,
-                afazer: afazerCorrigido,
+                afazer: afazerCorrigido.afazer,
                 timestamp: Date.now()
             }
         };

@@ -1,5 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import 'dotenv/config';
+import OpenAI from "openai";
+import fs from "fs";
+
+
+const openai = new OpenAI();
 
 const API_KEY = process.env.API_KEY
 const anthropic = new Anthropic({
@@ -178,7 +183,7 @@ async function extrairDadosImagemAnthropicAdress(media) {
         Exemplo de resposta: {
             "cidade": "São Paulo",
             "estado": "SP",
-            "endereco": "Rua das Flores, 123, Apto 45, Centro",
+            "endereco": "rua das Flores, 123, Apto 45, Centro",
             "cep": "01234-567"
         }`,
         messages: [
@@ -419,7 +424,7 @@ export async function requestFastApi(dados_pess, dados_end, option, profissao, e
             responseMessage += `• Estado Civil: ${estadoCivil}\n`;
         }
         
-        responseMessage += `\n${fastApiData.data.mensagem}`;
+        responseMessage += `\n${fastApiData.mensagem}`;
         
         await message.reply(responseMessage);
         
@@ -584,15 +589,52 @@ export async function processarCorrecoesFinal(currentState, correcaoSolicitada) 
 }
 
 export async function processarAudioAfazer(message) {
-    console.log("Simulando processamento de áudio...");
-    // Aqui entraria a lógica real de download e transcrição do áudio (ex: com a API do Whisper)
-    await sleep(1500); // Simula o tempo de processamento
-    return "Texto transcrito do áudio de exemplo.";
-}
+    const media = await message.downloadMedia();
 
-
-export async function corrigirAudioAfazer(message, featureData) {
+    const tempFile = './temp_audio.ogg'
     
+    fs.writeFileSync(tempFile, media.data, 'base64')
+    
+    try {
+        const transcription = await openai.audio.transcriptions.create({
+            file: fs.createReadStream(tempFile),
+            model: "gpt-4o-transcribe",
+          });
+    
+        fs.unlinkSync(tempFile);
+        
+        const response = await anthropic.messages.create({
+            model: 'claude-3-5-haiku-latest',
+            max_tokens: 200,
+            temperature: 0,
+            system: `Você é um assistente especializado em anotar tarefas. 
+            Sua tarefa é analisar textos e extrair nome completo e CPF. 
+            SEMPRE responda em formato JSON válido com a única chave 'afazer'. 
+            Se não conseguir extrair uma tarefa do texto, use null para o valor. 
+            Exemplos de resposta: {"afazer": "regar as plantas"},{"afazer": "enviar mensagem para Fulano sobre tal coisa"}`,
+            messages: [
+                {
+                    role: "user", 
+                    content: [
+                        {
+                            type: "text", 
+                            text: `Extraia do texto fornecido a tarefa a-fazer, retornando no formato JSON especificado.
+                            
+                            Texto: ${transcription.text}`
+                        }
+                    ]
+                }
+            ]
+        });
+        const dados = JSON.parse(response.content[0].text);
+        console.log(dados)
+        return dados;
+    }
+    catch {
+        if (fs.existsSync(tempFile)) {
+            fs.unlinkSync(tempFile);
+        }
+    }
 }
 
 export async function processarTextoAfazer(texto) {
@@ -601,7 +643,7 @@ export async function processarTextoAfazer(texto) {
         max_tokens: 200,
         temperature: 0,
         system: `Você é um assistente especializado em anotar tarefas. 
-        Sua tarefa é analisar textos e extrair nome completo e CPF. 
+        Sua tarefa é analisar textos e extrair a tarefa que o usuário deseja anotar. 
         SEMPRE responda em formato JSON válido com a única chave 'afazer'. 
         Se não conseguir extrair uma tarefa do texto, use null para o valor. 
         Exemplos de resposta: {"afazer": "regar as plantas"},{"afazer": "enviar mensagem para Fulano sobre tal coisa"}`,
@@ -624,11 +666,96 @@ export async function processarTextoAfazer(texto) {
     return dados;
 }
 
-export async function corrigirTextoAfazer(message_body, featureData) {
+// ... existing code ...
+
+export async function corrigirAudioAfazer(message, featureData) {
+    const media = await message.downloadMedia();
+    const tempFile = './temp_audio.ogg'
     
+    fs.writeFileSync(tempFile, media.data, 'base64')
+    
+    try {
+        const transcription = await openai.audio.transcriptions.create({
+            file: fs.createReadStream(tempFile),
+            model: "gpt-4o-transcribe",
+        });
+
+        fs.unlinkSync(tempFile);
+        
+        const response = await anthropic.messages.create({
+            model: 'claude-3-5-haiku-latest',
+            max_tokens: 200,
+            temperature: 0,
+            system: `Você é um assistente especializado em corrigir tarefas anotadas.
+            Sua tarefa é comparar o texto original com a correção solicitada e retornar a versão atualizada.
+            SEMPRE responda em formato JSON válido com a única chave 'afazer'.
+            Mantenha partes do texto original que não foram mencionadas para correção.
+            Se não conseguir entender a correção, retorne o texto original.`,
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: `TEXTO ORIGINAL: "${featureData.afazer}"
+                            CORREÇÃO SOLICITADA (transcrita do áudio): "${transcription.text}"
+                            
+                            Analise a correção solicitada e retorne a versão atualizada do texto no formato JSON.`
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        const dados = JSON.parse(response.content[0].text);
+        return dados;
+
+    } catch (error) {
+        console.error('Erro ao processar correção por áudio:', error);
+        if (fs.existsSync(tempFile)) {
+            fs.unlinkSync(tempFile);
+        }
+        return null;
+    }
 }
 
-export async function enviarAfazerParaApi(afazerTexto) {
+export async function corrigirTextoAfazer(texto, featureData) {
+    try {
+        const response = await anthropic.messages.create({
+            model: 'claude-3-5-haiku-latest',
+            max_tokens: 200,
+            temperature: 0,
+            system: `Você é um assistente especializado em corrigir tarefas anotadas.
+            Sua tarefa é comparar o texto original com a correção solicitada e retornar a versão atualizada.
+            SEMPRE responda em formato JSON válido com a única chave 'afazer'.
+            Mantenha partes do texto original que não foram mencionadas para correção.
+            Se não conseguir entender a correção, retorne o texto original.`,
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: `TEXTO ORIGINAL: "${featureData.afazer}"
+                            CORREÇÃO SOLICITADA: "${texto}"
+                            
+                            Analise a correção solicitada e retorne a versão atualizada do texto no formato JSON.`
+                        }
+                    ]
+                }
+            ]
+        });
+
+        const dados = JSON.parse(response.content[0].text);
+        return dados;
+        
+    } catch (error) {
+        console.error('Erro ao processar correção por texto:', error);
+        return null;
+    }
+}
+
+export async function enviarAfazerParaApi(afazerTexto, message) {
     try {
         let requestBody = {
             afazer: afazerTexto
@@ -643,8 +770,10 @@ export async function enviarAfazerParaApi(afazerTexto) {
             body: JSON.stringify(requestBody)
         });
     
-        if (!fastApiResponse.ok) {
-            throw new Error(`Erro HTTP: ${fastApiResponse.status}`);
+        const responseData = await fastApiResponse.json();
+
+        if (!responseData.data.mensagem) {
+            throw new Error(`Erro na resposta da API`);
         }
         return { success: true, message: "Anotado com sucesso no sistema." };
     }

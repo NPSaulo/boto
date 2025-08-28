@@ -6,7 +6,7 @@ import json
 from docxtpl import DocxTemplate
 from docxtpl.richtext import RichTextParagraph, RichText
 from datetime import datetime
-from templates import TemplateSelectorProc, TemplateSelectorCont, ContextBuilder, DocumentProcessor
+from templates import TemplateSelector, ContextBuilder, DocumentProcessor
 from models import ProcRequest, AnaliseInfoRequest, AnotarAfazerRequest
 from funcoes import analisar_html
 from dotenv import load_dotenv
@@ -35,18 +35,18 @@ async def root():
 
 @app.post("/proc")
 async def fazer_proc_cont(request: ProcRequest):
-    print(request)
     try:
-        # Inicializa os componentes
-        template_selector_proc = TemplateSelectorProc()
-        template_selector_cont = TemplateSelectorCont()
         context_builder = ContextBuilder(request)
-        document_processor_proc = DocumentProcessor(template_selector_proc, context_builder)
-        document_processor_cont = DocumentProcessor(template_selector_cont, context_builder)
         
-        # Processa os documentos
-        output_path_proc = await document_processor_proc.process_document(request)
-        output_path_cont = await document_processor_cont.process_document(request)
+        # Processa procuração
+        proc_selector = TemplateSelector(is_proc=True)
+        doc_processor_proc = DocumentProcessor(proc_selector, context_builder)
+        await doc_processor_proc.process_document()
+        
+        # Processa contrato
+        cont_selector = TemplateSelector(is_proc=False)
+        doc_processor_cont = DocumentProcessor(cont_selector, context_builder)
+        await doc_processor_cont.process_document()
         
         return {
             'data': {
@@ -54,10 +54,11 @@ async def fazer_proc_cont(request: ProcRequest):
             }
         }
     
-    except:
+    except Exception as e:
         return {
             'error': f'Erro ao processar documento: {str(e)}'
         }
+
 
 @app.get("/teste")
 async def get_modelos_proc():
@@ -79,8 +80,16 @@ async def anotar_afazer(request: AnotarAfazerRequest):
     print(request)
     try:
         PATH_TODOLIST = os.getenv('PATH_TODOLIST')
-        with open(PATH_TODOLIST, "a") as file:
-            file.write("\n" + request.afazer)
+        timestamp = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+        msg_formatada = f"- [ ] {request.afazer.strip()} _{timestamp}_\n"
+        with open(PATH_TODOLIST, "a", encoding='utf-8') as file:
+            file.write(msg_formatada)
         print("A-fazer anotado com sucesso.")
+        return {
+            'data': {
+                'mensagem': "A-fazer anotado com sucesso."
+            }
+        }
     except Exception as e:
         print(f"Erro ao anotar a-fazer: {e}")
