@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class ProcRequest(BaseModel):
     nome: str
@@ -24,3 +25,10 @@ class AnaliseInfoRequest(BaseModel):
 
 class AnotarAfazerRequest(BaseModel):
     afazer: str
+
+class LMStudioRequest(BaseModel):
+    method: str
+    path: str
+    temperature: float
+    max_tokens: int
+    messages: List[dict]
