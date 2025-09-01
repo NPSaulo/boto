@@ -222,12 +222,12 @@ async def get_modelos_proc():
         "data": parsed_data
     }
 
-@app.post("/anotar_afazer")
+@app.post("/anotar_afazer", dependencies=[Depends(get_api_key)])
 async def anotar_afazer(request: AnotarAfazerRequest):
     print(request)
     try:
-        PATH_TODOLIST = os.getenv('PATH_TODOLIST')
-        timestamp = datetime.now().strftime("%m/%Y-%m-%d")
+        PATH_TODOLIST = os.getenv('PATH_TODO_LIST')
+        timestamp = datetime.now().strftime("%Y-%m-%d")
 
         msg_formatada = f"- [ ] {request.afazer.strip()} 📅 {timestamp}\n"
         with open(PATH_TODOLIST, "a", encoding='utf-8') as file:
