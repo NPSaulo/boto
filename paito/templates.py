@@ -74,7 +74,7 @@ class DocumentProcessor:
         
         doc = DocxTemplate(template_path)
         doc.render(context)
-        
+        #falta alterar na biblioteca docxtpl para deixar a função assíncrona
         filename = f"{self.template_selector.prefix}{context['nome']}_{datetime.today().strftime('%d_%m_%Y_%H_%M')}.docx"
         output_path = f"{self.OUTPUT_PATH}\\{filename}"
         doc.save(output_path)

@@ -6,7 +6,7 @@ import fs from "fs";
 
 const openai = new OpenAI();
 
-const API_KEY = process.env.API_KEY
+const API_KEY = process.env.ANTHROPIC_API_KEY
 const anthropic = new Anthropic({
     apiKey: API_KEY
 })
@@ -766,6 +766,7 @@ export async function enviarAfazerParaApi(afazerTexto, message) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'x-api-key': process.env.API_KEY
             },
             body: JSON.stringify(requestBody)
         });
