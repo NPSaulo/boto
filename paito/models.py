@@ -19,16 +19,5 @@ class ProcRequest(BaseModel):
     informa_prof: bool
     informa_civ: bool
 
-class AnaliseInfoRequest(BaseModel):
-    html: str
-
-
 class AnotarAfazerRequest(BaseModel):
     afazer: str
-
-class LMStudioRequest(BaseModel):
-    method: str
-    path: str
-    temperature: float
-    max_tokens: int
-    messages: List[dict]
